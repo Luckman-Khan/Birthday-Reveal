@@ -1,142 +1,131 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Birthday Reveal</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* Custom styles for drag effects */
-        .dragging {
-            transform: scale(1.04);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
-        }
-        /* Ensure no scrolling during drag */
-        body.dragging {
-            overflow: hidden;
-            touch-action: none;
-        }
-        /* Portrait mode message */
-        @media (orientation: landscape) {
-            .portrait-only {
-                display: none;
-            }
-            .landscape-message {
-                display: flex;
-            }
-        }
-        @media (orientation: portrait) {
-            .landscape-message {
-                display: none;
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  />
+  <title>Birthday Reveal</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      touch-action: none;
+      background: black;
+    }
+
+    img {
+      user-select: none;
+      -webkit-user-drag: none;
+      background-color: transparent !important;
+    }
+
+    @media (orientation: landscape) {
+      .portrait-only { display: none; }
+      .landscape-message { display: flex; }
+    }
+
+    @media (orientation: portrait) {
+      .landscape-message { display: none; }
+    }
+  </style>
 </head>
-<body class="m-0 p-0 bg-black">
-    <!-- Landscape message -->
-    <div class="landscape-message hidden md:flex items-center justify-center h-screen text-white text-xl">
-        Please rotate to portrait mode 📱
-    </div>
+<body>
 
-    <!-- App container (responsive, portrait mode) -->
-    <div class="portrait-only relative w-full h-screen overflow-hidden">
-        <!-- Background image -->
-        <img id="background" src="/assets/background.jpg" alt="Birthday Background" class="absolute inset-0 w-full h-full object-cover" style="z-index: 0;">
+  <!-- Landscape Warning -->
+  <div class="landscape-message hidden md:flex items-center justify-center h-screen text-white text-xl">
+    Please rotate to portrait mode 📱
+  </div>
 
-        <!-- Container for papers (will be populated by JS) -->
-        <div id="papers-container" class="absolute inset-0"></div>
-    </div>
+  <!-- App -->
+  <div class="portrait-only relative w-full h-screen overflow-hidden">
 
-    <script>
-        // Paper data array with specific positions - easy to add/remove papers here
-        // Positions: center, slightly above left, slightly below right, above center, on face
-        const papers = [
-            { src: '/assets/paper1.png', zIndex: 5, top: '50%', left: '50%' }, // Center
-            { src: '/assets/paper2.png', zIndex: 4, top: '40%', left: '40%' }, // Slightly above and left
-            { src: '/assets/paper3.png', zIndex: 3, top: '60%', left: '60%' }, // Slightly below and right
-            { src: '/assets/paper4.png', zIndex: 2, top: '30%', left: '50%' }, // Above from center
-            { src: '/assets/paper5.png', zIndex: 1, top: '45%', left: '50%' }  // On the face (near center)
-        ];
+    <!-- Background -->
+    <img
+      src="./assets/background.jpg"
+      class="absolute inset-0 w-full h-full object-cover"
+      style="z-index:0; pointer-events:none; transform:translateZ(0);"
+      alt="Background"
+    />
 
-        const papersContainer = document.getElementById('papers-container');
-        let isDragging = false;
-        let currentPaper = null;
-        let startX = 0;
-        let startY = 0;
-        let dragTranslateX = 0;
-        let dragTranslateY = 0;
+    <!-- Papers -->
+    <div id="papers-container" class="absolute inset-0"></div>
+  </div>
 
-        // Function to generate random rotation (-6 to +6 deg)
-        function getRandomRotation() {
-            return (Math.random() - 0.5) * 12; // -6 to +6
-        }
+  <script>
+    /* Papers with intentional offsets + rotations
+       paper4 is DOUBLE sized
+    */
+    const papers = [
+      { src: './assets/paper1.png', z: 5, x: 0,   y: -90,   scale: 1, rotation: -4 },
+      { src: './assets/paper2.png', z: 4, x: -28, y: 90, scale: 1, rotation: 6  }, //
+      { src: './assets/paper3.png', z: 3, x: 40,  y: 62,  scale: 1, rotation: -7 },
+      { src: './assets/paper4.png', z: 2, x: -50, y: -26,  scale: 1.8, rotation: 5  }, // 🔥 big paper
+      { src: './assets/paper5.png', z: 1, x: 14,  y: -95, scale: 1.3, rotation: -6 }
+    ];
 
-        // Create and position paper elements
-        papers.forEach(paper => {
-            const img = document.createElement('img');
-            img.src = paper.src;
-            img.alt = 'Wish Paper';
-            img.className = 'absolute cursor-pointer select-none';
-            img.style.zIndex = paper.zIndex;
-            img.style.top = paper.top;
-            img.style.left = paper.left;
-            img.style.width = '40%'; // 2/5 size, responsive
-            img.style.height = 'auto';
-            img.style.backgroundColor = 'transparent'; // Remove background (assuming PNGs for transparency)
-            const rotation = getRandomRotation();
-            img.baseTransform = `translate(-50%, -50%) rotate(${rotation}deg)`;
-            img.style.transform = img.baseTransform;
-            img.style.pointerEvents = 'auto'; // Ensure pointer events work
-            papersContainer.appendChild(img);
+    const container = document.getElementById('papers-container');
 
-            // Attach drag event listeners
-            img.addEventListener('pointerdown', (e) => {
-                e.preventDefault(); // Prevent default behavior
-                isDragging = true;
-                currentPaper = img;
-                document.body.classList.add('dragging'); // Prevent scrolling
-                img.classList.add('dragging'); // Apply scale and shadow
+    let activePaper = null;
+    let startX = 0;
+    let startY = 0;
 
-                // Get initial drag position
-                startX = e.clientX;
-                startY = e.clientY;
-                // Reset drag translate for this paper
-                dragTranslateX = 0;
-                dragTranslateY = 0;
-            });
-        });
+    papers.forEach(p => {
+      const img = document.createElement('img');
 
-        // Global pointer move for dragging
-        document.addEventListener('pointermove', (e) => {
-            if (!isDragging || !currentPaper) return;
-            e.preventDefault();
+      img.src = p.src;
+      img.style.position = 'absolute';
+      img.style.top = '50%';
+      img.style.left = '50%';
+      img.style.width = '40%';
+      img.style.zIndex = p.z;
 
-            const deltaX = e.clientX - startX;
-            const deltaY = e.clientY - startY;
+      img.style.willChange = 'transform';
+      img.style.backfaceVisibility = 'hidden';
+      img.style.transformOrigin = 'center center';
 
-            // Update drag translate
-            dragTranslateX = deltaX;
-            dragTranslateY = deltaY;
+      img.baseTransform =
+        `translate(-50%, -50%) translate(${p.x}px, ${p.y}px) rotate(${p.rotation}deg) scale(${p.scale})`;
 
-            // Apply transform: base centering + drag translate
-            currentPaper.style.transform = `${currentPaper.baseTransform} translate(${dragTranslateX}px, ${dragTranslateY}px)`;
-        });
+      img.style.transform = img.baseTransform;
 
-        // Global pointer up to stop dragging
-        document.addEventListener('pointerup', () => {
-            if (!isDragging) return;
-            isDragging = false;
-            if (currentPaper) {
-                currentPaper.classList.remove('dragging');
-                document.body.classList.remove('dragging');
-                // Keep the final position by not resetting transform
-                currentPaper = null;
-            }
-        });
+      img.addEventListener('pointerdown', e => {
+        e.preventDefault();
+        activePaper = img;
+        startX = e.clientX;
+        startY = e.clientY;
 
-        // Prevent context menu on long press
-        document.addEventListener('contextmenu', (e) => e.preventDefault());
-    </script>
+        img.style.filter = 'drop-shadow(0 10px 20px rgba(0,0,0,0.3))';
+      });
+
+      container.appendChild(img);
+    });
+
+    document.addEventListener('pointermove', e => {
+      if (!activePaper) return;
+
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+
+      activePaper.style.transform =
+        `${activePaper.baseTransform} translate(${dx}px, ${dy}px) scale(1.04)`;
+    });
+
+    document.addEventListener('pointerup', () => {
+      if (!activePaper) return;
+
+      activePaper.style.filter = '';
+      activePaper = null;
+    });
+
+    document.addEventListener('contextmenu', e => e.preventDefault());
+  </script>
+
 </body>
 </html>
