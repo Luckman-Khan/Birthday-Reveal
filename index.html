@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Birthday Reveal</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for drag effects */
+        .dragging {
+            transform: scale(1.04);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+        /* Ensure no scrolling during drag */
+        body.dragging {
+            overflow: hidden;
+            touch-action: none;
+        }
+        /* Portrait mode message */
+        @media (orientation: landscape) {
+            .portrait-only {
+                display: none;
+            }
+            .landscape-message {
+                display: flex;
+            }
+        }
+        @media (orientation: portrait) {
+            .landscape-message {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body class="m-0 p-0 bg-black">
+    <!-- Landscape message -->
+    <div class="landscape-message hidden md:flex items-center justify-center h-screen text-white text-xl">
+        Please rotate to portrait mode 📱
+    </div>
+
+    <!-- App container (responsive, portrait mode) -->
+    <div class="portrait-only relative w-full h-screen overflow-hidden">
+        <!-- Background image -->
+        <img id="background" src="/assets/background.jpg" alt="Birthday Background" class="absolute inset-0 w-full h-full object-cover" style="z-index: 0;">
+
+        <!-- Container for papers (will be populated by JS) -->
+        <div id="papers-container" class="absolute inset-0"></div>
+    </div>
+
+    <script>
+        // Paper data array with specific positions - easy to add/remove papers here
+        // Positions: center, slightly above left, slightly below right, above center, on face
+        const papers = [
+            { src: '/assets/paper1.png', zIndex: 5, top: '50%', left: '50%' }, // Center
+            { src: '/assets/paper2.png', zIndex: 4, top: '40%', left: '40%' }, // Slightly above and left
+            { src: '/assets/paper3.png', zIndex: 3, top: '60%', left: '60%' }, // Slightly below and right
+            { src: '/assets/paper4.png', zIndex: 2, top: '30%', left: '50%' }, // Above from center
+            { src: '/assets/paper5.png', zIndex: 1, top: '45%', left: '50%' }  // On the face (near center)
+        ];
+
+        const papersContainer = document.getElementById('papers-container');
+        let isDragging = false;
+        let currentPaper = null;
+        let startX = 0;
+        let startY = 0;
+        let dragTranslateX = 0;
+        let dragTranslateY = 0;
+
+        // Function to generate random rotation (-6 to +6 deg)
+        function getRandomRotation() {
+            return (Math.random() - 0.5) * 12; // -6 to +6
+        }
+
+        // Create and position paper elements
+        papers.forEach(paper => {
+            const img = document.createElement('img');
+            img.src = paper.src;
+            img.alt = 'Wish Paper';
+            img.className = 'absolute cursor-pointer select-none';
+            img.style.zIndex = paper.zIndex;
+            img.style.top = paper.top;
+            img.style.left = paper.left;
+            img.style.width = '40%'; // 2/5 size, responsive
+            img.style.height = 'auto';
+            img.style.backgroundColor = 'transparent'; // Remove background (assuming PNGs for transparency)
+            const rotation = getRandomRotation();
+            img.baseTransform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+            img.style.transform = img.baseTransform;
+            img.style.pointerEvents = 'auto'; // Ensure pointer events work
+            papersContainer.appendChild(img);
+
+            // Attach drag event listeners
+            img.addEventListener('pointerdown', (e) => {
+                e.preventDefault(); // Prevent default behavior
+                isDragging = true;
+                currentPaper = img;
+                document.body.classList.add('dragging'); // Prevent scrolling
+                img.classList.add('dragging'); // Apply scale and shadow
+
+                // Get initial drag position
+                startX = e.clientX;
+                startY = e.clientY;
+                // Reset drag translate for this paper
+                dragTranslateX = 0;
+                dragTranslateY = 0;
+            });
+        });
+
+        // Global pointer move for dragging
+        document.addEventListener('pointermove', (e) => {
+            if (!isDragging || !currentPaper) return;
+            e.preventDefault();
+
+            const deltaX = e.clientX - startX;
+            const deltaY = e.clientY - startY;
+
+            // Update drag translate
+            dragTranslateX = deltaX;
+            dragTranslateY = deltaY;
+
+            // Apply transform: base centering + drag translate
+            currentPaper.style.transform = `${currentPaper.baseTransform} translate(${dragTranslateX}px, ${dragTranslateY}px)`;
+        });
+
+        // Global pointer up to stop dragging
+        document.addEventListener('pointerup', () => {
+            if (!isDragging) return;
+            isDragging = false;
+            if (currentPaper) {
+                currentPaper.classList.remove('dragging');
+                document.body.classList.remove('dragging');
+                // Keep the final position by not resetting transform
+                currentPaper = null;
+            }
+        });
+
+        // Prevent context menu on long press
+        document.addEventListener('contextmenu', (e) => e.preventDefault());
+    </script>
+</body>
+</html>
