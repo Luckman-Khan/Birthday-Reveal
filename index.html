@@ -1,282 +1,326 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport"
-  content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Birthday Reveal</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Birthday Reveal</title>
 
-<script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
 
-<style>
-html, body {
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  overflow: hidden;
-  touch-action: none;
-  background: black;
-}
+  <style>
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      touch-action: none;
+      background: black;
+    }
 
-img {
-  user-select: none;
-  -webkit-user-drag: none;
-  background-color: transparent !important;
-  touch-action: none;
-  transition: transform 0.15s ease;
-  will-change: transform;
-}
+    img {
+      user-select: none;
+      -webkit-user-drag: none;
+      background-color: transparent !important;
+      touch-action: none;
+      transition: transform 0.15s ease;
+      will-change: transform;
+    }
 
-/* 🚀 Rocket */
-.rocket {
-  position: absolute;
-  width: 3px;
-  height: 16px;
-  bottom: 0;
-  animation: rocket-fly 1100ms cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
-  pointer-events: none;
-}
+    /* 🚀 Rocket */
+    .rocket {
+      position: absolute;
+      width: 3px;
+      height: 16px;
+      bottom: 0;
+      animation: rocket-fly 1100ms cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+      pointer-events: none;
+    }
 
-@keyframes rocket-fly {
-  from { transform: translateY(0); opacity: 1; }
-  to   { transform: translateY(var(--rise)); opacity: 0.95; }
-}
+    @keyframes rocket-fly {
+      from {
+        transform: translateY(0);
+        opacity: 1;
+      }
 
-/* ✨ Explosion stars */
-.star {
-  position: absolute;
-  width: 6px;
-  height: 6px;
-  clip-path: polygon(
-    50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%,
-    50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%
-  );
-  animation: explode 850ms ease-out forwards;
-  pointer-events: none;
-}
+      to {
+        transform: translateY(var(--rise));
+        opacity: 0.95;
+      }
+    }
 
-@keyframes explode {
-  0% { transform: scale(0.7); opacity: 1; }
-  100% {
-    transform: translate(var(--dx), var(--dy)) scale(1.15);
-    opacity: 0;
-  }
-}
+    /* ✨ Explosion stars */
+    .star {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%,
+          50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+      animation: explode 850ms ease-out forwards;
+      pointer-events: none;
+    }
 
-/* 🌟 Twinkle stars */
-.twinkle {
-  position: absolute;
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  opacity: 0;
-  animation: twinkle 2.4s ease-in-out forwards;
-  pointer-events: none;
-}
+    @keyframes explode {
+      0% {
+        transform: scale(0.7);
+        opacity: 1;
+      }
 
-@keyframes twinkle {
-  0% { opacity: 0; }
-  45% { opacity: 1; }
-  100% { opacity: 0; }
-}
-</style>
+      100% {
+        transform: translate(var(--dx), var(--dy)) scale(1.15);
+        opacity: 0;
+      }
+    }
+
+    /* 🌟 Twinkle stars */
+    .twinkle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      opacity: 0;
+      animation: twinkle 2.4s ease-in-out forwards;
+      pointer-events: none;
+    }
+
+    @keyframes twinkle {
+      0% {
+        opacity: 0;
+      }
+
+      45% {
+        opacity: 1;
+      }
+
+      100% {
+        opacity: 0;
+      }
+    }
+  </style>
+  <script>
+    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+  </script>
+  <script defer src="/_vercel/insights/script.js"></script>
 </head>
 
 <body>
 
-<div id="app" class="relative w-full h-screen overflow-hidden">
+  <div id="app" class="relative w-full h-screen overflow-hidden">
 
-  <!-- BACKGROUND (FIXED COVERAGE) -->
-  <img
-    id="bg"
-    src="./assets/background.jpg"
-    class="absolute inset-0 w-full h-full object-cover pointer-events-none"
-    style="width:100%; height:100%;"
-    alt="Background"
-  />
+    <!-- BACKGROUND (FIXED COVERAGE) -->
+    <img id="bg" src="./assets/background.jpg" class="absolute inset-0 w-full h-full object-cover pointer-events-none"
+      style="width:100%; height:100%;" alt="Background" />
 
-  <div id="papers-container" class="absolute inset-0"></div>
-</div>
+    <div id="papers-container" class="absolute inset-0"></div>
+  </div>
 
-<script>
-/* ---------------- CONFIG ---------------- */
+  <script>
+    /* ---------------- CONFIG ---------------- */
 
-const papers = [
-  { src:'./assets/paper1.png', z:5, x:0, y:-90, scale:1.1, r:-4 },
-  { src:'./assets/paper2.png', z:4, x:-28, y:90, scale:1.1, r:6 },
-  { src:'./assets/paper3.png', z:3, x:40, y:62, scale:1.1, r:-7 },
-  { src:'./assets/paper4.png', z:2, x:-50, y:-26, scale:1.9, r:5 },
-  { src:'./assets/paper5.png', z:1, x:14, y:-95, scale:1.4, r:-6, trigger:true }
-];
+    const papers = [
+      { src: './assets/paper1.png', z: 5, x: 0, y: -90, scale: 1.6, r: -4 }, // Increased scale
+      { src: './assets/paper2.png', z: 4, x: -28, y: 90, scale: 2.2, r: 6 }, // Especially increased
+      { src: './assets/paper3.png', z: 3, x: 40, y: 62, scale: 2.2, r: -7 }, // Especially increased
+      { src: './assets/paper4.png', z: 2, x: -50, y: -26, scale: 1.9, r: 5 },
+      { src: './assets/paper5.png', z: 1, x: 14, y: -95, scale: 1.8, r: -6, trigger: true }
+    ];
 
-const colors = [
-  '#ff4d4d','#ffd93d','#4dd2ff','#b266ff','#6dff6d',
-  '#ff9ff3','#ffa502','#70a1ff','#2ed573',
-  '#ff7f50','#a29bfe','#00cec9'
-];
+    const colors = [
+      '#ff4d4d', '#ffd93d', '#4dd2ff', '#b266ff', '#6dff6d',
+      '#ff9ff3', '#ffa502', '#70a1ff', '#2ed573',
+      '#ff7f50', '#a29bfe', '#00cec9'
+    ];
 
-/* ---------------- STATE ---------------- */
+    /* ---------------- STATE ---------------- */
 
-const container = document.getElementById('papers-container');
-let activePaper = null;
-let fireworksStarted = false;
+    const container = document.getElementById('papers-container');
+    let activePaper = null;
+    let fireworksStarted = false;
 
-let pointers = new Map();
-let startDistance = 0;
-let startScale = 1;
+    let pointers = new Map();
+    let startDistance = 0;
+    let startScale = 1;
 
-let offsetX = 0;
-let offsetY = 0;
+    let offsetX = 0;
+    let offsetY = 0;
 
-/* ---------------- HELPERS ---------------- */
+    /* ---------------- HELPERS ---------------- */
 
-const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
-const randColor = () => colors[Math.random() * colors.length | 0];
+    const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+    const randColor = () => colors[Math.random() * colors.length | 0];
 
-/* ---------------- FIREWORKS ---------------- */
+    /* ---------------- FIREWORKS ---------------- */
 
-function startFireworks() {
-  if (fireworksStarted) return;
-  fireworksStarted = true;
-  setInterval(launchMultipleRockets, 750);
-  setInterval(spawnTwinkle, 400);
-}
-
-function launchMultipleRockets() {
-  for (let i = 0; i < 3; i++) {
-    setTimeout(launchRocket, i * 120);
-  }
-}
-
-function launchRocket() {
-  const rocket = document.createElement('div');
-  rocket.className = 'rocket';
-
-  const x = Math.random() * innerWidth;
-  const rise = -(innerHeight * (0.45 + Math.random() * 0.4));
-  const color = randColor();
-
-  rocket.style.left = `${x}px`;
-  rocket.style.background = color;
-  rocket.style.setProperty('--rise', `${rise}px`);
-
-  document.body.appendChild(rocket);
-
-  setTimeout(() => {
-    rocket.remove();
-    explode(x, innerHeight + rise, color);
-  }, 1100);
-}
-
-function explode(x, y, color) {
-  for (let i = 0; i < 10; i++) {
-    const star = document.createElement('div');
-    star.className = 'star';
-    star.style.left = `${x}px`;
-    star.style.top = `${y}px`;
-    star.style.background = color;
-
-    const a = Math.random() * Math.PI * 2;
-    const d = 16 + Math.random() * 20;
-
-    star.style.setProperty('--dx', `${Math.cos(a)*d}px`);
-    star.style.setProperty('--dy', `${Math.sin(a)*d}px`);
-
-    document.body.appendChild(star);
-    setTimeout(() => star.remove(), 850);
-  }
-}
-
-function spawnTwinkle() {
-  const t = document.createElement('div');
-  t.className = 'twinkle';
-  t.style.left = `${Math.random()*innerWidth}px`;
-  t.style.top = `${Math.random()*innerHeight}px`;
-  t.style.background = randColor();
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 2400);
-}
-
-/* ---------------- INIT ---------------- */
-
-papers.forEach(p => {
-  const img = document.createElement('img');
-  img.src = p.src;
-
-  img.style.position = 'absolute';
-  img.style.left = '50%';
-  img.style.top = '50%';
-  img.style.width = '40%';
-  img.style.zIndex = p.z;
-
-  img.baseX = p.x;
-  img.baseY = p.y;
-  img.scale = p.scale;
-
-  img.update = (lift = 0) => {
-    img.style.transform =
-      `translate(-50%,-50%) translate(${img.baseX}px,${img.baseY - lift}px)
-       rotate(${p.r}deg) scale(${img.scale})`;
-  };
-
-  img.update();
-
-  img.addEventListener('pointerdown', e => {
-    e.preventDefault();
-    img.setPointerCapture(e.pointerId);
-    activePaper = img;
-
-    const rect = img.getBoundingClientRect();
-    offsetX = e.clientX - (rect.left + rect.width / 2);
-    offsetY = e.clientY - (rect.top + rect.height / 2);
-
-    pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
-
-    if (pointers.size === 2) {
-      const pts = [...pointers.values()];
-      startDistance = dist(pts[0], pts[1]);
-      startScale = img.scale;
+    function startFireworks() {
+      if (fireworksStarted) return;
+      fireworksStarted = true;
+      setInterval(launchMultipleRockets, 750);
+      setInterval(spawnTwinkle, 400);
     }
 
-    img.update(8);
-    if (p.trigger) startFireworks();
-  });
-
-  img.addEventListener('pointermove', e => {
-    if (!pointers.has(e.pointerId)) return;
-    pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
-
-    if (pointers.size === 1 && activePaper) {
-      img.baseX = e.clientX - innerWidth/2 - offsetX;
-      img.baseY = e.clientY - innerHeight/2 - offsetY;
-      img.update(8);
+    function launchMultipleRockets() {
+      for (let i = 0; i < 5; i++) {
+        setTimeout(launchRocket, i * 200);
+      }
     }
 
-    if (pointers.size === 2) {
-      const pts = [...pointers.values()];
-      const d = dist(pts[0], pts[1]);
-      img.scale = Math.min(3, Math.max(0.5, startScale * (d / startDistance)));
-      img.update(8);
+    function launchRocket() {
+      const rocket = document.createElement('div');
+      rocket.className = 'rocket';
+
+      const x = Math.random() * innerWidth;
+      const rise = -(innerHeight * (0.5 + Math.random() * 0.4));
+      const color = randColor();
+
+      rocket.style.left = `${x}px`;
+      rocket.style.background = color;
+      rocket.style.setProperty('--rise', `${rise}px`);
+
+      document.body.appendChild(rocket);
+
+      setTimeout(() => {
+        rocket.remove();
+        explode(x, innerHeight + rise, color);
+      }, 1100);
     }
-  });
 
-  img.addEventListener('pointerup', e => {
-    pointers.delete(e.pointerId);
-    if (pointers.size === 0) {
-      img.update(0);
-      activePaper = null;
+    function explode(x, y, color) {
+      const particleCount = 80;
+      for (let i = 0; i < particleCount; i++) {
+        const star = document.createElement('div');
+        star.className = 'star';
+        star.style.left = `${x}px`;
+        star.style.top = `${y}px`;
+        star.style.background = color;
+
+        // Randomize particle size
+        const size = 6 + Math.random() * 8;
+        star.style.width = `${size}px`;
+        star.style.height = `${size}px`;
+
+        const a = Math.random() * Math.PI * 2;
+        // Much larger spread
+        const d = 50 + Math.random() * 300;
+
+        star.style.setProperty('--dx', `${Math.cos(a) * d}px`);
+        star.style.setProperty('--dy', `${Math.sin(a) * d}px`);
+
+        // Randomize animation duration slightly
+        star.style.animationDuration = `${900 + Math.random() * 400}ms`;
+
+        document.body.appendChild(star);
+        setTimeout(() => star.remove(), 1400);
+      }
     }
-  });
 
-  img.addEventListener('pointercancel', () => {
-    pointers.clear();
-    img.update(0);
-    activePaper = null;
-  });
+    function spawnTwinkle() {
+      const t = document.createElement('div');
+      t.className = 'twinkle';
+      t.style.left = `${Math.random() * innerWidth}px`;
+      t.style.top = `${Math.random() * innerHeight}px`;
+      t.style.background = randColor();
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 2400);
+    }
 
-  container.appendChild(img);
-});
-</script>
+    /* ---------------- INIT ---------------- */
+
+    function initPapers() {
+      container.innerHTML = ''; // Clear existing to re-init on resize
+      const isDesktop = window.innerWidth > 800;
+
+      papers.forEach(p => {
+        const img = document.createElement('img');
+        img.src = p.src;
+
+        img.style.position = 'absolute';
+        img.style.left = '50%';
+        img.style.top = '50%';
+        // Responsive width: 100% on mobile, smaller on desktop to look natural
+        img.style.width = isDesktop ? '55vw' : '100%';
+        img.style.zIndex = p.z;
+
+        // Spread papers more on desktop to cover screen
+        const spreadFactor = isDesktop ? 3.5 : 1;
+
+        img.baseX = p.x * spreadFactor;
+        img.baseY = p.y * spreadFactor;
+        img.scale = p.scale;
+
+        img.update = (lift = 0) => {
+          img.style.transform =
+            `translate(-50%,-50%) translate(${img.baseX}px,${img.baseY - lift}px)
+         rotate(${p.r}deg) scale(${img.scale})`;
+        };
+
+        img.update();
+
+        img.addEventListener('pointerdown', e => {
+          e.preventDefault();
+          img.setPointerCapture(e.pointerId);
+          activePaper = img;
+
+          const rect = img.getBoundingClientRect();
+          offsetX = e.clientX - (rect.left + rect.width / 2);
+          offsetY = e.clientY - (rect.top + rect.height / 2);
+
+          pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+          if (pointers.size === 2) {
+            const pts = [...pointers.values()];
+            startDistance = dist(pts[0], pts[1]);
+            startScale = img.scale;
+          }
+
+          img.update(8);
+          if (p.trigger) startFireworks();
+        });
+
+        img.addEventListener('pointermove', e => {
+          if (!pointers.has(e.pointerId)) return;
+          pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+          if (pointers.size === 1 && activePaper) {
+            img.baseX = e.clientX - innerWidth / 2 - offsetX;
+            img.baseY = e.clientY - innerHeight / 2 - offsetY;
+            img.update(8);
+          }
+
+          if (pointers.size === 2) {
+            const pts = [...pointers.values()];
+            const d = dist(pts[0], pts[1]);
+            img.scale = Math.min(6, Math.max(0.5, startScale * (d / startDistance)));
+            img.update(8);
+          }
+        });
+
+        img.addEventListener('pointerup', e => {
+          pointers.delete(e.pointerId);
+          if (pointers.size === 0) {
+            img.update(0);
+            activePaper = null;
+          }
+        });
+
+        img.addEventListener('pointercancel', () => {
+          pointers.clear();
+          img.update(0);
+          activePaper = null;
+        });
+
+        container.appendChild(img);
+      });
+    }
+
+    initPapers();
+
+    window.addEventListener('resize', () => {
+      // Debounce slightly or just re-init
+      initPapers();
+    });
+  </script>
 
 </body>
+
 </html>
